@@ -69,7 +69,7 @@ The following screenshot is a successful screen.
 
 ## Built With
 
-* [tkinter] (https://wiki.python.org/moin/TkInter) - Python GUI
+* [tkinter](https://wiki.python.org/moin/TkInter) - Python GUI
 * [Selenium](https://www.seleniumhq.org/) - The browserr automaintion
 * [BeautifulSoup](https://www.crummy.com/software/BeautifulSoup/) - Screen-scraping
 

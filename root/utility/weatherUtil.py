@@ -7,26 +7,31 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
 class GetWeatherApp(threading.Thread):
-    def __init__(self, mainTabContainer):
+    def __init__(self, configs, mainTabContainer):
         super().__init__()
+        self.setDaemon(True)
         self.mainTabContainer = mainTabContainer
+        self.configs = configs
         self.start()
 
     def run(self):
-        self.updateWeather()
+        while not self.configs.isStopped:
+            self.updateWeather()
+            with self.configs.condition:
+                self.configs.condition.wait(30)
     
     def updateWeather(self):
         weatherResultDict = self.getWeather()
         r = 0
         t = datetime.datetime.now()
-        ttk.Label(self.mainTabContainer, text=t).grid(column=0, row=r, sticky='W')
-        r+=1
-        for key in weatherResultDict:
-            text = "{}\t{}\t{}\t{}".format(key,weatherResultDict[key][0], weatherResultDict[key][1], weatherResultDict[key][2])
-            ttk.Label(self.mainTabContainer, text=text).grid(column=0, row=r, sticky='W')
-            r+=1
-        time.sleep(3600)
-        self.updateWeather()
+        with self.configs.condition:
+            if not self.configs.isStopped:
+                ttk.Label(self.mainTabContainer, text=t).grid(column=0, row=r, sticky='W')
+                r+=1
+                for key in weatherResultDict:
+                    text = "{}\t{}\t{}\t{}".format(key,weatherResultDict[key][0], weatherResultDict[key][1], weatherResultDict[key][2])
+                    ttk.Label(self.mainTabContainer, text=text).grid(column=0, row=r, sticky='W')
+                    r+=1
 
     def getWeatherScrape(self, html):
         soup = BeautifulSoup(html, 'html.parser')

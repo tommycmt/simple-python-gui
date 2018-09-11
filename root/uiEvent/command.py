@@ -1,9 +1,14 @@
+import sys
 from tkinter import messagebox as mBox
 
-def _quit(win):
-    win.quit()
-    win.destroy()
-    exit()
+global isStopped
+
+def _quit(root):
+    with root.configs.condition:
+        root.configs.isStopped = True
+        root.configs.condition.notify_all()
+    root.quit()
+    root.destroy()
 
 def _about():
     mBox.showinfo('About', 'Copyright © 2018 Tommy Tang\nAll Rights Reserved！')

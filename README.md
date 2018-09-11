@@ -59,7 +59,16 @@ simple-python-gui\
 Go to the root directory under simple-python-gui 
 
 ```
-pythonw main.py
+pythonw main.py [--module [modules]]
+```
+
+Current modules : main weather warframe
+
+if --module is not provided, all module will be shown
+
+Example:
+```
+pythonw main.py --module main weather warframe
 ```
 
 Wait for a while and wait the content is loaded
@@ -80,3 +89,8 @@ The following screenshot is a successful screen.
 ## License
 
 This project is licensed under the Apache License, Version 2.0 - see the [LICENSE.md](LICENSE.md) file for details
+
+
+## Acknowledgement
+
+* [HKO](https://www.hko.gov.hk/) - Weather Information

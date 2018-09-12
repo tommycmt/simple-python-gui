@@ -10,6 +10,10 @@ from component.tabContainer import TabContainer
 
 from utility.weatherUtil import GetWeatherApp
 
+moduleMapping = {
+    "weather": lambda configs, container: GetWeatherApp(configs, container)
+}
+
 class Win(tk.Tk):
     def __init__(self, *args, **kwargs):
         super().__init__()
@@ -36,9 +40,11 @@ class Win(tk.Tk):
         
 def runModule(root, *args, **kwargs):
     modules = []
-    if ('weather' in kwargs['module']):
-        weatherApp = GetWeatherApp(root.configs, root.tabContainer.weather)
-        modules.append(weatherApp)
+    for module in kwargs['module']:
+        if module in moduleMapping:
+            moduleApp = moduleMapping[module](root.configs,
+                                              getattr(root.tabContainer, module))
+            modules.append(moduleApp)
     return modules
 
 def main(*args, **kwargs):
@@ -49,14 +55,10 @@ def main(*args, **kwargs):
 
 def on_closing(root):
     with root.configs.condition:
-        print(root.configs.condition)
-        print(root.configs.isStopped)
         root.configs.isStopped = True
         root.configs.condition.notify_all()
     root.quit()
     root.destroy()
-    print(root.configs.condition)
-    print(root.configs.isStopped)
     
 
 if __name__ == '__main__':

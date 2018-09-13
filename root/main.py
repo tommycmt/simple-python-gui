@@ -9,9 +9,11 @@ from component.tabControl import TabControl
 from component.tabContainer import TabContainer
 
 from utility.weatherUtil import GetWeatherApp
+from utility.warframeUtil import GetWarframeApp
 
 moduleMapping = {
-    "weather": lambda configs, container: GetWeatherApp(configs, container)
+    "weather": lambda configs, container: GetWeatherApp(configs, container),
+    "warframe": lambda configs, container: GetWarframeApp(configs, container)
 }
 
 class Win(tk.Tk):
@@ -19,7 +21,7 @@ class Win(tk.Tk):
         super().__init__()
         self.title("Python GUI")
         self.resizable(1,1)
-        self.geometry('450x250')
+        self.geometry('650x350')
         condition = threading.Condition()
         self.configs = Config(condition)
         self.configUI(*args, **kwargs)
@@ -62,6 +64,7 @@ def on_closing(root):
     
 
 if __name__ == '__main__':
+    sys.setrecursionlimit(6000)
     parser = argparse.ArgumentParser(description='')
     parser.add_argument('--module', type=str, nargs='*')
     args = parser.parse_args()

@@ -80,9 +80,11 @@ class GetWeatherApp(threading.Thread):
     
     def updateWarning(self, startingRow, warningText):
         r = startingRow
-        text = " ".join(warningText)
-        ttk.Label(self.container, text=text).grid(column=0, row=r, sticky='W')
-        return r+1
+        if warningText != []:
+            text = " ".join(warningText)
+            ttk.Label(self.container, text=text).grid(column=0, row=r, sticky='W')
+            r += 1
+        return r
 
     
     def updateWeather(self, startingRow, weatherResultDict):

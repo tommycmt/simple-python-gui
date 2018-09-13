@@ -33,27 +33,6 @@ To get this application
 git clone https://github.com/tommycmt/simple-python-gui.git
 ```
 
-2. Make sure the directory structure
-
-```
-simple-python-gui\
-	README.md
-	images\
-		xxx.png
-	root\
-		main.py
-		component\
-			menubar.py
-			...
-		uiEvent
-			command.py
-		utility\
-			weatherUtil.py
-			applications\
-				chromedriver.exe
-```
-
-
 ## Run this application
 
 Go to the root directory under simple-python-gui 
@@ -94,3 +73,4 @@ This project is licensed under the Apache License, Version 2.0 - see the [LICENS
 ## Acknowledgement
 
 * [HKO](https://www.hko.gov.hk/) - Weather Information
+* [Warframe](http://wf.poedb.tw/) - Warframe Alert and Invasion Information

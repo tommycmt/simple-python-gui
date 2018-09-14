@@ -1,6 +1,6 @@
 import sys, os
 import argparse
-import threading
+import logging
 import tkinter as tk
 from tkinter import ttk
 from config.config import Config
@@ -17,13 +17,12 @@ moduleMapping = {
 }
 
 class Win(tk.Tk):
-    def __init__(self, *args, **kwargs):
+    def __init__(self,configs, *args, **kwargs):
         super().__init__()
+        self.configs = configs
         self.title("Python GUI")
         self.resizable(1,1)
         self.geometry('650x350')
-        condition = threading.Condition()
-        self.configs = Config(condition)
         self.configUI(*args, **kwargs)
 
     def configUI(self, *args, **kwargs):
@@ -49,27 +48,37 @@ def runModule(root, *args, **kwargs):
             modules.append(moduleApp)
     return modules
 
-def main(*args, **kwargs):
-    root = Win(*args, **kwargs)
+def main(config, *args, **kwargs):
+    root = Win(configs, *args, **kwargs)
     root.protocol("WM_DELETE_WINDOW", lambda: on_closing(root))
+    logging.debug("Windows started")
+    
     modules = runModule(root, *args, **kwargs)
+    logging.debug("Modules added into config object")
+    logging.debug("Mainloop start")
     root.mainloop()
 
 def on_closing(root):
+    logging.warning("Starting closing")
     with root.configs.condition:
         root.configs.isStopped = True
         root.configs.condition.notify_all()
     root.quit()
     root.destroy()
+    logging.warning("App killed")
+
     
 
 if __name__ == '__main__':
+    configs = Config()
     sys.setrecursionlimit(6000)
     parser = argparse.ArgumentParser(description='')
     parser.add_argument('--module', type=str, nargs='*')
     args = parser.parse_args()
     module = args.module
+    
     if module == None:
-        main(module=['main', 'weather', 'warframe'])
-    else:
-        main(module=args.module)
+        module=['main', 'weather', 'warframe']
+        
+    logging.debug("User args: " + str(module))
+    main(configs, module=module)

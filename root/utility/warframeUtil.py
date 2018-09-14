@@ -3,9 +3,10 @@ from datetime import datetime, timedelta
 import time
 import os
 import pickle
-import re
+import logging
 from tkinter import ttk
 from bs4 import BeautifulSoup
+from .requestHTMLUtil import requestHTML
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
@@ -15,15 +16,7 @@ class GetWarframeApp(threading.Thread):
         self.setDaemon(True)
         self.container = container
         self.configs = configs
-        
-        options_Args = ["--headless", "disable-gpu"]
-        self.options = Options()
-        for arg in options_Args:
-            self.options.add_argument(arg)
-        self.service_args = ["hide_console", ]
-        self.DriverPath = __file__.rsplit(os.sep,1)[0] + r'\applications\chromedriver.exe'
-        self.currentPath = __file__.rsplit(os.sep,1)[0]
-        
+        self.currentPath = __file__.rsplit(os.sep,1)[0]  
         self.start()
 
 
@@ -35,49 +28,41 @@ class GetWarframeApp(threading.Thread):
             mtime = datetime.fromtimestamp(mtime)
         except:
             pass
-        if mtime == None or ((datetime.now() - mtime).total_seconds() > 900):
-            warframeResultDict = self.getWarframe("http://wf.poedb.tw/")
+        if mtime == None or ((datetime.now() - mtime).total_seconds() > 600):
+            warframeResultDict = requestHTML("http://wf.poedb.tw/", self.getWarframeScrape)
             with open(self.currentPath+r"\cache\warframeResultDict.txt", "wb") as warframeResultDictFile:
                 pickle.dump(warframeResultDict, warframeResultDictFile)
-            mtime = os.path.getmtime(self.currentPath+r"\cache\warframeResultDict.txt")
-            mtime = datetime.fromtimestamp(mtime)
         else:
             with open(self.currentPath+r"\cache\warframeResultDict.txt", "rb") as warframeResultDictFile:
                 warframeResultDictCache = pickle.load(warframeResultDictFile)
                 warframeResultDict = warframeResultDictCache
-        return mtime, warframeResultDict
+        return warframeResultDict
     
     def run(self):
         while not self.configs.isStopped:
-            mtime, warframeResultDict = self.checkWarframeResultDictCache()
+            warframeResultDict = self.checkWarframeResultDictCache()
+            logging.debug(warframeResultDict)
             with self.configs.condition:
                 if not self.configs.isStopped:
+                    for widget in self.container.winfo_children():
+                        widget.destroy()
                     r = self.showTime(0)
-                    r = self.updateWarframe(r, warframeResultDict, mtime)
-                    self.configs.condition.wait(900)
+                    r = self.updateWarframe(r, warframeResultDict)
+                    self.configs.condition.wait(600)
 
     def showTime(self, startingRow):
         r = startingRow
         t = datetime.now().isoformat(sep=" ", timespec='seconds')  
         ttk.Label(self.container, text=t).grid(column=0, row=r, sticky='W')
         return r+1
-
-    def convertTimer(self, alert, mtime):
-        timerPattern = re.compile("(\d*)h (\d*)m (\d*)s")
-        timerGroup = timerPattern.match(alert[1])
-        totalTime = timedelta(hours=int(timerGroup.group(1)),
-                              minutes=int(timerGroup.group(2)),
-                              seconds=int(timerGroup.group(3)))
-        return (mtime + totalTime).strftime("%H:%M:%S")
     
-    def updateWarframe(self, startingRow, warframeResultDict, mtime):
+    def updateWarframe(self, startingRow, warframeResultDict):
         r = startingRow
         ttk.Label(self.container, text="警報").grid(column=0, row=r, sticky='W')
         r+=1
         for alert in warframeResultDict["alerts"]:
-            endTime = self.convertTimer(alert, mtime)
             ttk.Label(self.container, text=alert[0]).grid(column=0, row=r, sticky='W')
-            ttk.Label(self.container, text=endTime).grid(column=1, row=r, sticky='W')
+            ttk.Label(self.container, text=alert[1].strftime("%H:%M:%S")).grid(column=1, row=r, sticky='W')
             for index in range(2, len(alert[2:]) + 2):
                 ttk.Label(self.container, text=alert[index]).grid(column=index, row=r, sticky='W')
             r+=1
@@ -100,8 +85,10 @@ class GetWarframeApp(threading.Thread):
         alertTags = soup.select("#alerts2 tbody tr td")
         for alertTag in alertTags:
             alertRewardTags = alertTag.select(".badge")
+            endTime = datetime.fromtimestamp(int((alertTag.select(".end_time")[0])
+                                                             .attrs["data-countdown"]))
             alert = [alertTag.select(".end_time")[0].next_sibling,
-                     alertTag.select(".end_time")[0].text]
+                     endTime]
             alertRewards = []
             currentTag = alertTag.select("hr")[0]
             while currentTag.next_sibling != None:
@@ -118,11 +105,4 @@ class GetWarframeApp(threading.Thread):
                         [invasionRewardTag.text for invasionRewardTag in invasionRewardTags if invasionRewardTag.text != '']
             result['invasions'].append(invasion)
         return result
-     
-    def getWarframe(self, url):
-        browser = webdriver.Chrome(self.DriverPath,service_args=self.service_args, options=self.options, )
-        browser.get(url)
-        result = self.getWarframeScrape(browser.page_source)
-        browser.quit()
-        return result
-    
+
